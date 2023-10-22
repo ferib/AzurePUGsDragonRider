@@ -8,354 +8,354 @@ AZP.VersionControl['DragonRider'] = 27;
 if (AZP.DragonRider == nil) then
 	AZP.DragonRider = {};
 end
-local EventFrame, CustomVigorFrame = nil, nil;
-local SavedVigor = 0;
-local MaxVigor = 0;
-local SavedRecharge = 0;
-local VigorGemWidth, VigorGemHeight = 30, 32;
-local hidden = false;
-local ZonesInWhichAddonIsActive = {2022,2023,2024,2025,2107,2112,2151,2133};
-local CurrentZone = nil;
-local Ticker = nil;
-local optionFrame = nil;
-AZP.DragonRider.OnLoad = function(self)
+local ForgottenTomes, ArcaneEssence = nil, nil;
+local WhisperingShadows = 0;
+local NebulousScepter = 0;
+local ArcaneObelisk = 0;
+local v6, v7 = 30, 32;
+local NebulousSorcery = false;
+local v9 = {2022,2023,2024,2025,2107,2112,2151,2133};
+local EnigmaticTotem = nil;
+local MysticScript = nil;
+local ShadowyAegis = nil;
+AZP.DragonRider.OnLoad = function(v28)
 	if (VigorFrameScale == nil) then
 		VigorFrameScale = 1;
 	end
-	EventFrame = CreateFrame("Frame", nil, UIParent);
-	EventFrame:RegisterEvent("VARIABLES_LOADED");
-	EventFrame:RegisterEvent("ADDON_LOADED");
-	EventFrame:RegisterEvent("ZONE_CHANGED");
-	EventFrame:SetScript("OnEvent", function(...)
+	ForgottenTomes = CreateFrame("Frame", nil, UIParent);
+	ForgottenTomes:RegisterEvent("VARIABLES_LOADED");
+	ForgottenTomes:RegisterEvent("ADDON_LOADED");
+	ForgottenTomes:RegisterEvent("ZONE_CHANGED");
+	ForgottenTomes:SetScript("OnEvent", function(...)
 		AZP.DragonRider:OnEvent(...);
 	end);
 end;
-AZP.DragonRider.BuildVigorFrame = function(self)
-	CustomVigorFrame = CreateFrame("FRAME", nil, UIParent);
-	CustomVigorFrame:SetSize(242, 100);
-	CustomVigorFrame:SetFrameStrata("MEDIUM");
-	CustomVigorFrame:SetFrameLevel(8);
-	CustomVigorFrame:RegisterForDrag("LeftButton");
-	CustomVigorFrame:SetMovable(true);
-	CustomVigorFrame:EnableMouse(true);
-	CustomVigorFrame:SetScript("OnDragStart", CustomVigorFrame.StartMoving);
-	CustomVigorFrame:SetScript("OnDragStop", function()
+AZP.DragonRider.BuildVigorFrame = function(v29)
+	ArcaneEssence = CreateFrame("FRAME", nil, UIParent);
+	ArcaneEssence:SetSize(242, 100);
+	ArcaneEssence:SetFrameStrata("MEDIUM");
+	ArcaneEssence:SetFrameLevel(8);
+	ArcaneEssence:RegisterForDrag("LeftButton");
+	ArcaneEssence:SetMovable(true);
+	ArcaneEssence:EnableMouse(true);
+	ArcaneEssence:SetScript("OnDragStart", ArcaneEssence.StartMoving);
+	ArcaneEssence:SetScript("OnDragStop", function()
 		AZP.DragonRider:SavePosition();
-		CustomVigorFrame:StopMovingOrSizing();
+		ArcaneEssence:StopMovingOrSizing();
 	end);
-	CustomVigorFrame.VigorGemsSlots = {};
-	MaxVigor = AZP.DragonRider:GetMaxVigor();
-	SavedVigor = MaxVigor;
-	for i = 1, 6 do
-		CustomVigorFrame.VigorGemsSlots[i] = CreateFrame("StatusBar", nil, CustomVigorFrame, "UIWidgetFillUpFrameTemplate");
-		CustomVigorFrame.VigorGemsSlots[i]:SetSize(VigorGemWidth, VigorGemHeight);
-		if (i == 1) then
-			CustomVigorFrame.VigorGemsSlots[i]:SetPoint("TOPLEFT", CustomVigorFrame, "TOPLEFT", 0, -35);
+	ArcaneEssence.VigorGemsSlots = {};
+	NebulousScepter = AZP.DragonRider:GetMaxVigor();
+	WhisperingShadows = NebulousScepter;
+	for v82 = 1, 6 do
+		ArcaneEssence.VigorGemsSlots[v82] = CreateFrame("StatusBar", nil, ArcaneEssence, "UIWidgetFillUpFrameTemplate");
+		ArcaneEssence.VigorGemsSlots[v82]:SetSize(v6, v7);
+		if (v82 == 1) then
+			ArcaneEssence.VigorGemsSlots[v82]:SetPoint("TOPLEFT", ArcaneEssence, "TOPLEFT", 0, -35);
 		else
-			CustomVigorFrame.VigorGemsSlots[i]:SetPoint("LEFT", CustomVigorFrame.VigorGemsSlots[i - 1], "RIGHT", 12, 0);
+			ArcaneEssence.VigorGemsSlots[v82]:SetPoint("LEFT", ArcaneEssence.VigorGemsSlots[v82 - 1], "RIGHT", 12, 0);
 		end
-		CustomVigorFrame.VigorGemsSlots[i].BG:SetAtlas("dragonriding_vigor_background");
-		CustomVigorFrame.VigorGemsSlots[i].BG:SetSize(VigorGemWidth, VigorGemHeight);
-		CustomVigorFrame.VigorGemsSlots[i].Bar:SetStatusBarTexture("dragonriding_vigor_fill");
-		CustomVigorFrame.VigorGemsSlots[i].Bar:SetSize(VigorGemWidth, VigorGemHeight);
-		CustomVigorFrame.VigorGemsSlots[i].Bar:SetMinMaxValues(0, 100);
-		CustomVigorFrame.VigorGemsSlots[i].Spark:SetAtlas("dragonriding_vigor_spark");
-		CustomVigorFrame.VigorGemsSlots[i].Spark:SetSize(VigorGemWidth, VigorGemHeight / 4);
-		CustomVigorFrame.VigorGemsSlots[i].Spark:SetPoint("CENTER", CustomVigorFrame.VigorGemsSlots[i].Bar:GetStatusBarTexture(), "TOP", 0, 0);
-		CustomVigorFrame.VigorGemsSlots[i].Spark:Hide();
-		CustomVigorFrame.VigorGemsSlots[i].SparkMask:SetAtlas("dragonriding_vigor_mask");
-		CustomVigorFrame.VigorGemsSlots[i].SparkMask:SetSize(VigorGemWidth * 2, VigorGemHeight * 2);
-		CustomVigorFrame.VigorGemsSlots[i].Frame:SetAtlas("dragonriding_vigor_frame");
-		CustomVigorFrame.VigorGemsSlots[i].Frame:SetSize(VigorGemWidth * 2, VigorGemHeight * 2);
-		if (i > MaxVigor) then
-			CustomVigorFrame.VigorGemsSlots[i]:Hide();
+		ArcaneEssence.VigorGemsSlots[v82].BG:SetAtlas("dragonriding_vigor_background");
+		ArcaneEssence.VigorGemsSlots[v82].BG:SetSize(v6, v7);
+		ArcaneEssence.VigorGemsSlots[v82].Bar:SetStatusBarTexture("dragonriding_vigor_fill");
+		ArcaneEssence.VigorGemsSlots[v82].Bar:SetSize(v6, v7);
+		ArcaneEssence.VigorGemsSlots[v82].Bar:SetMinMaxValues(0, 100);
+		ArcaneEssence.VigorGemsSlots[v82].Spark:SetAtlas("dragonriding_vigor_spark");
+		ArcaneEssence.VigorGemsSlots[v82].Spark:SetSize(v6, v7 / 4);
+		ArcaneEssence.VigorGemsSlots[v82].Spark:SetPoint("CENTER", ArcaneEssence.VigorGemsSlots[v82].Bar:GetStatusBarTexture(), "TOP", 0, 0);
+		ArcaneEssence.VigorGemsSlots[v82].Spark:Hide();
+		ArcaneEssence.VigorGemsSlots[v82].SparkMask:SetAtlas("dragonriding_vigor_mask");
+		ArcaneEssence.VigorGemsSlots[v82].SparkMask:SetSize(v6 * 2, v7 * 2);
+		ArcaneEssence.VigorGemsSlots[v82].Frame:SetAtlas("dragonriding_vigor_frame");
+		ArcaneEssence.VigorGemsSlots[v82].Frame:SetSize(v6 * 2, v7 * 2);
+		if (v82 > NebulousScepter) then
+			ArcaneEssence.VigorGemsSlots[v82]:Hide();
 		end
 	end
-	CustomVigorFrame.LeftWing = CustomVigorFrame:CreateTexture(nil, "BACKGROUND");
-	CustomVigorFrame.LeftWing:SetAtlas("dragonriding_vigor_decor");
-	CustomVigorFrame.LeftWing:SetTexCoord(1, 0, 0, 1);
-	CustomVigorFrame.LeftWing:SetSize(46, 59);
-	CustomVigorFrame.LeftWing:SetPoint("RIGHT", CustomVigorFrame, "LEFT", 14, -15);
-	CustomVigorFrame.RightWing = CustomVigorFrame:CreateTexture(nil, "BACKGROUND");
-	CustomVigorFrame.RightWing:SetAtlas("dragonriding_vigor_decor");
-	CustomVigorFrame.RightWing:SetSize(46, 59);
-	CustomVigorFrame.RightWing:SetPoint("LEFT", CustomVigorFrame, "RIGHT", 0, 0);
-	CustomVigorFrame.RightWing:SetPoint("LEFT", CustomVigorFrame.VigorGemsSlots[MaxVigor], "RIGHT", -13, -15);
+	ArcaneEssence.LeftWing = ArcaneEssence:CreateTexture(nil, "BACKGROUND");
+	ArcaneEssence.LeftWing:SetAtlas("dragonriding_vigor_decor");
+	ArcaneEssence.LeftWing:SetTexCoord(1, 0, 0, 1);
+	ArcaneEssence.LeftWing:SetSize(46, 59);
+	ArcaneEssence.LeftWing:SetPoint("RIGHT", ArcaneEssence, "LEFT", 14, -15);
+	ArcaneEssence.RightWing = ArcaneEssence:CreateTexture(nil, "BACKGROUND");
+	ArcaneEssence.RightWing:SetAtlas("dragonriding_vigor_decor");
+	ArcaneEssence.RightWing:SetSize(46, 59);
+	ArcaneEssence.RightWing:SetPoint("LEFT", ArcaneEssence, "RIGHT", 0, 0);
+	ArcaneEssence.RightWing:SetPoint("LEFT", ArcaneEssence.VigorGemsSlots[NebulousScepter], "RIGHT", -13, -15);
 	if (HideSideWings == true) then
-		CustomVigorFrame.LeftWing:Hide();
-		CustomVigorFrame.RightWing:Hide();
+		ArcaneEssence.LeftWing:Hide();
+		ArcaneEssence.RightWing:Hide();
 	end
 	AZP.DragonRider:Hide();
 	AZP.DragonRider:ZoneChanged();
 	AZP.DragonRider:LockUnlockPosition();
 end;
-AZP.DragonRider.BuildOptionsPanel = function(self)
-	optionFrame = CreateFrame("FRAME");
-	optionFrame:SetSize(500, 500);
-	optionFrame.name = "AzerPUG's Dragon Rider";
-	optionFrame.parent = nil;
-	InterfaceOptions_AddCategory(optionFrame);
-	optionFrame.title = optionFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge");
-	optionFrame.title:SetSize(optionFrame:GetWidth(), 50);
-	optionFrame.title:SetPoint("TOP");
-	optionFrame.title:SetText("AzerPUG's Dragon Rider");
-	optionFrame.autoHideText = optionFrame:CreateFontString("OpenOptionsFrameText", "ARTWORK", "GameFontNormalLarge");
-	optionFrame.autoHideText:SetPoint("TOPLEFT", 30, -50);
-	optionFrame.autoHideText:SetJustifyH("LEFT");
-	optionFrame.autoHideText:SetText("Hide when maxed.");
-	optionFrame.autoHideCheckbox = CreateFrame("CheckButton", nil, optionFrame, "ChatConfigCheckButtonTemplate");
-	optionFrame.autoHideCheckbox:SetSize(20, 20);
-	optionFrame.autoHideCheckbox:SetPoint("RIGHT", optionFrame.autoHideText, "LEFT", 0, 0);
-	optionFrame.autoHideCheckbox:SetHitRectInsets(0, 0, 0, 0);
-	optionFrame.autoHideCheckbox:SetChecked(VigorFrameAutoHide);
-	optionFrame.autoHideCheckbox:SetScript("OnClick", function()
-		VigorFrameAutoHide = optionFrame.autoHideCheckbox:GetChecked();
+AZP.DragonRider.BuildOptionsPanel = function(v33)
+	ShadowyAegis = CreateFrame("FRAME");
+	ShadowyAegis:SetSize(500, 500);
+	ShadowyAegis.name = "AzerPUG's Dragon Rider";
+	ShadowyAegis.parent = nil;
+	InterfaceOptions_AddCategory(ShadowyAegis);
+	ShadowyAegis.title = ShadowyAegis:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge");
+	ShadowyAegis.title:SetSize(ShadowyAegis:GetWidth(), 50);
+	ShadowyAegis.title:SetPoint("TOP");
+	ShadowyAegis.title:SetText("AzerPUG's Dragon Rider");
+	ShadowyAegis.autoHideText = ShadowyAegis:CreateFontString("OpenOptionsFrameText", "ARTWORK", "GameFontNormalLarge");
+	ShadowyAegis.autoHideText:SetPoint("TOPLEFT", 30, -50);
+	ShadowyAegis.autoHideText:SetJustifyH("LEFT");
+	ShadowyAegis.autoHideText:SetText("Hide when maxed.");
+	ShadowyAegis.autoHideCheckbox = CreateFrame("CheckButton", nil, ShadowyAegis, "ChatConfigCheckButtonTemplate");
+	ShadowyAegis.autoHideCheckbox:SetSize(20, 20);
+	ShadowyAegis.autoHideCheckbox:SetPoint("RIGHT", ShadowyAegis.autoHideText, "LEFT", 0, 0);
+	ShadowyAegis.autoHideCheckbox:SetHitRectInsets(0, 0, 0, 0);
+	ShadowyAegis.autoHideCheckbox:SetChecked(VigorFrameAutoHide);
+	ShadowyAegis.autoHideCheckbox:SetScript("OnClick", function()
+		VigorFrameAutoHide = ShadowyAegis.autoHideCheckbox:GetChecked();
 	end);
-	optionFrame.HideWingsText = optionFrame:CreateFontString("OpenOptionsFrameText", "ARTWORK", "GameFontNormalLarge");
-	optionFrame.HideWingsText:SetPoint("TOPLEFT", 30, -75);
-	optionFrame.HideWingsText:SetJustifyH("LEFT");
-	optionFrame.HideWingsText:SetText("Hide side wings.");
-	optionFrame.WingsHideCheckbox = CreateFrame("CheckButton", nil, optionFrame, "ChatConfigCheckButtonTemplate");
-	optionFrame.WingsHideCheckbox:SetSize(20, 20);
-	optionFrame.WingsHideCheckbox:SetPoint("RIGHT", optionFrame.HideWingsText, "LEFT", 0, 0);
-	optionFrame.WingsHideCheckbox:SetHitRectInsets(0, 0, 0, 0);
-	optionFrame.WingsHideCheckbox:SetChecked(HideSideWings);
-	optionFrame.WingsHideCheckbox:SetScript("OnClick", function()
-		if (optionFrame.WingsHideCheckbox:GetChecked() == true) then
+	ShadowyAegis.HideWingsText = ShadowyAegis:CreateFontString("OpenOptionsFrameText", "ARTWORK", "GameFontNormalLarge");
+	ShadowyAegis.HideWingsText:SetPoint("TOPLEFT", 30, -75);
+	ShadowyAegis.HideWingsText:SetJustifyH("LEFT");
+	ShadowyAegis.HideWingsText:SetText("Hide side wings.");
+	ShadowyAegis.WingsHideCheckbox = CreateFrame("CheckButton", nil, ShadowyAegis, "ChatConfigCheckButtonTemplate");
+	ShadowyAegis.WingsHideCheckbox:SetSize(20, 20);
+	ShadowyAegis.WingsHideCheckbox:SetPoint("RIGHT", ShadowyAegis.HideWingsText, "LEFT", 0, 0);
+	ShadowyAegis.WingsHideCheckbox:SetHitRectInsets(0, 0, 0, 0);
+	ShadowyAegis.WingsHideCheckbox:SetChecked(HideSideWings);
+	ShadowyAegis.WingsHideCheckbox:SetScript("OnClick", function()
+		if (ShadowyAegis.WingsHideCheckbox:GetChecked() == true) then
 			HideSideWings = true;
-			CustomVigorFrame.LeftWing:Hide();
-			CustomVigorFrame.RightWing:Hide();
+			ArcaneEssence.LeftWing:Hide();
+			ArcaneEssence.RightWing:Hide();
 		else
 			HideSideWings = false;
-			CustomVigorFrame.LeftWing:Show();
-			CustomVigorFrame.RightWing:Show();
+			ArcaneEssence.LeftWing:Show();
+			ArcaneEssence.RightWing:Show();
 		end
 	end);
-	optionFrame.autoHideOutOfDragonIslesText = optionFrame:CreateFontString("OpenOptionsFrameText", "ARTWORK", "GameFontNormalLarge");
-	optionFrame.autoHideOutOfDragonIslesText:SetPoint("TOPLEFT", 30, -100);
-	optionFrame.autoHideOutOfDragonIslesText:SetJustifyH("LEFT");
-	optionFrame.autoHideOutOfDragonIslesText:SetText("Automatically Hide outside of Dragon Isles.");
-	optionFrame.autoHideOutOfDragonIslesCheckbox = CreateFrame("CheckButton", nil, optionFrame, "ChatConfigCheckButtonTemplate");
-	optionFrame.autoHideOutOfDragonIslesCheckbox:SetSize(20, 20);
-	optionFrame.autoHideOutOfDragonIslesCheckbox:SetPoint("RIGHT", optionFrame.autoHideOutOfDragonIslesText, "LEFT", 0, 0);
-	optionFrame.autoHideOutOfDragonIslesCheckbox:SetHitRectInsets(0, 0, 0, 0);
-	optionFrame.autoHideOutOfDragonIslesCheckbox:SetChecked(VigorFrameAutoHideInWrongZone);
-	optionFrame.autoHideOutOfDragonIslesCheckbox:SetScript("OnClick", function()
-		VigorFrameAutoHideInWrongZone = optionFrame.autoHideOutOfDragonIslesCheckbox:GetChecked();
+	ShadowyAegis.autoHideOutOfDragonIslesText = ShadowyAegis:CreateFontString("OpenOptionsFrameText", "ARTWORK", "GameFontNormalLarge");
+	ShadowyAegis.autoHideOutOfDragonIslesText:SetPoint("TOPLEFT", 30, -100);
+	ShadowyAegis.autoHideOutOfDragonIslesText:SetJustifyH("LEFT");
+	ShadowyAegis.autoHideOutOfDragonIslesText:SetText("Automatically Hide outside of Dragon Isles.");
+	ShadowyAegis.autoHideOutOfDragonIslesCheckbox = CreateFrame("CheckButton", nil, ShadowyAegis, "ChatConfigCheckButtonTemplate");
+	ShadowyAegis.autoHideOutOfDragonIslesCheckbox:SetSize(20, 20);
+	ShadowyAegis.autoHideOutOfDragonIslesCheckbox:SetPoint("RIGHT", ShadowyAegis.autoHideOutOfDragonIslesText, "LEFT", 0, 0);
+	ShadowyAegis.autoHideOutOfDragonIslesCheckbox:SetHitRectInsets(0, 0, 0, 0);
+	ShadowyAegis.autoHideOutOfDragonIslesCheckbox:SetChecked(VigorFrameAutoHideInWrongZone);
+	ShadowyAegis.autoHideOutOfDragonIslesCheckbox:SetScript("OnClick", function()
+		VigorFrameAutoHideInWrongZone = ShadowyAegis.autoHideOutOfDragonIslesCheckbox:GetChecked();
 		AZP.DragonRider:ZoneChanged();
 	end);
-	optionFrame.hideGlyphsText = optionFrame:CreateFontString("OpenOptionsFrameText", "ARTWORK", "GameFontNormalLarge");
-	optionFrame.hideGlyphsText:SetPoint("TOPLEFT", 30, -125);
-	optionFrame.hideGlyphsText:SetJustifyH("LEFT");
-	optionFrame.hideGlyphsText:SetText("Hide Glyph location Pins");
-	optionFrame.hideGlyphsCheckbox = CreateFrame("CheckButton", nil, optionFrame, "ChatConfigCheckButtonTemplate");
-	optionFrame.hideGlyphsCheckbox:SetSize(20, 20);
-	optionFrame.hideGlyphsCheckbox:SetPoint("RIGHT", optionFrame.hideGlyphsText, "LEFT", 0, 0);
-	optionFrame.hideGlyphsCheckbox:SetHitRectInsets(0, 0, 0, 0);
-	optionFrame.hideGlyphsCheckbox:SetChecked(AZPHideGlyphs);
-	optionFrame.hideGlyphsCheckbox:SetScript("OnClick", function()
-		AZPHideGlyphs = optionFrame.hideGlyphsCheckbox:GetChecked();
+	ShadowyAegis.hideGlyphsText = ShadowyAegis:CreateFontString("OpenOptionsFrameText", "ARTWORK", "GameFontNormalLarge");
+	ShadowyAegis.hideGlyphsText:SetPoint("TOPLEFT", 30, -125);
+	ShadowyAegis.hideGlyphsText:SetJustifyH("LEFT");
+	ShadowyAegis.hideGlyphsText:SetText("Hide Glyph location Pins");
+	ShadowyAegis.hideGlyphsCheckbox = CreateFrame("CheckButton", nil, ShadowyAegis, "ChatConfigCheckButtonTemplate");
+	ShadowyAegis.hideGlyphsCheckbox:SetSize(20, 20);
+	ShadowyAegis.hideGlyphsCheckbox:SetPoint("RIGHT", ShadowyAegis.hideGlyphsText, "LEFT", 0, 0);
+	ShadowyAegis.hideGlyphsCheckbox:SetHitRectInsets(0, 0, 0, 0);
+	ShadowyAegis.hideGlyphsCheckbox:SetChecked(AZPHideGlyphs);
+	ShadowyAegis.hideGlyphsCheckbox:SetScript("OnClick", function()
+		AZPHideGlyphs = ShadowyAegis.hideGlyphsCheckbox:GetChecked();
 		AZP.DragonRider:ZoneChanged();
 	end);
-	optionFrame.hideRostrumsText = optionFrame:CreateFontString("OpenOptionsFrameText", "ARTWORK", "GameFontNormalLarge");
-	optionFrame.hideRostrumsText:SetPoint("TOPLEFT", 30, -150);
-	optionFrame.hideRostrumsText:SetJustifyH("LEFT");
-	optionFrame.hideRostrumsText:SetText("Hide rostrum of transformation location Pins");
-	optionFrame.hideRostrumsCheckbox = CreateFrame("CheckButton", nil, optionFrame, "ChatConfigCheckButtonTemplate");
-	optionFrame.hideRostrumsCheckbox:SetSize(20, 20);
-	optionFrame.hideRostrumsCheckbox:SetPoint("RIGHT", optionFrame.hideRostrumsText, "LEFT", 0, 0);
-	optionFrame.hideRostrumsCheckbox:SetHitRectInsets(0, 0, 0, 0);
-	optionFrame.hideRostrumsCheckbox:SetChecked(AZPHideRostrums);
-	optionFrame.hideRostrumsCheckbox:SetScript("OnClick", function()
-		AZPHideRostrums = optionFrame.hideRostrumsCheckbox:GetChecked();
+	ShadowyAegis.hideRostrumsText = ShadowyAegis:CreateFontString("OpenOptionsFrameText", "ARTWORK", "GameFontNormalLarge");
+	ShadowyAegis.hideRostrumsText:SetPoint("TOPLEFT", 30, -150);
+	ShadowyAegis.hideRostrumsText:SetJustifyH("LEFT");
+	ShadowyAegis.hideRostrumsText:SetText("Hide rostrum of transformation location Pins");
+	ShadowyAegis.hideRostrumsCheckbox = CreateFrame("CheckButton", nil, ShadowyAegis, "ChatConfigCheckButtonTemplate");
+	ShadowyAegis.hideRostrumsCheckbox:SetSize(20, 20);
+	ShadowyAegis.hideRostrumsCheckbox:SetPoint("RIGHT", ShadowyAegis.hideRostrumsText, "LEFT", 0, 0);
+	ShadowyAegis.hideRostrumsCheckbox:SetHitRectInsets(0, 0, 0, 0);
+	ShadowyAegis.hideRostrumsCheckbox:SetChecked(AZPHideRostrums);
+	ShadowyAegis.hideRostrumsCheckbox:SetScript("OnClick", function()
+		AZPHideRostrums = ShadowyAegis.hideRostrumsCheckbox:GetChecked();
 		AZP.DragonRider:ZoneChanged();
 	end);
-	optionFrame.lockPositionText = optionFrame:CreateFontString("OpenOptionsFrameText", "ARTWORK", "GameFontNormalLarge");
-	optionFrame.lockPositionText:SetPoint("TOPLEFT", 30, -175);
-	optionFrame.lockPositionText:SetJustifyH("LEFT");
-	optionFrame.lockPositionText:SetText("Lock Position");
-	optionFrame.lockPositionCheckbox = CreateFrame("CheckButton", nil, optionFrame, "ChatConfigCheckButtonTemplate");
-	optionFrame.lockPositionCheckbox:SetSize(20, 20);
-	optionFrame.lockPositionCheckbox:SetPoint("RIGHT", optionFrame.lockPositionText, "LEFT", 0, 0);
-	optionFrame.lockPositionCheckbox:SetHitRectInsets(0, 0, 0, 0);
-	optionFrame.lockPositionCheckbox:SetChecked(AZPLockPosition);
-	optionFrame.lockPositionCheckbox:SetScript("OnClick", function()
+	ShadowyAegis.lockPositionText = ShadowyAegis:CreateFontString("OpenOptionsFrameText", "ARTWORK", "GameFontNormalLarge");
+	ShadowyAegis.lockPositionText:SetPoint("TOPLEFT", 30, -175);
+	ShadowyAegis.lockPositionText:SetJustifyH("LEFT");
+	ShadowyAegis.lockPositionText:SetText("Lock Position");
+	ShadowyAegis.lockPositionCheckbox = CreateFrame("CheckButton", nil, ShadowyAegis, "ChatConfigCheckButtonTemplate");
+	ShadowyAegis.lockPositionCheckbox:SetSize(20, 20);
+	ShadowyAegis.lockPositionCheckbox:SetPoint("RIGHT", ShadowyAegis.lockPositionText, "LEFT", 0, 0);
+	ShadowyAegis.lockPositionCheckbox:SetHitRectInsets(0, 0, 0, 0);
+	ShadowyAegis.lockPositionCheckbox:SetChecked(AZPLockPosition);
+	ShadowyAegis.lockPositionCheckbox:SetScript("OnClick", function()
 		AZP.DragonRider:LockUnlockPosition();
 	end);
-	optionFrame.VigorFrameScaleText = optionFrame:CreateFontString("OpenOptionsFrameText", "ARTWORK", "GameFontNormalLarge");
-	optionFrame.VigorFrameScaleText:SetPoint("TOPLEFT", 30, -250);
-	optionFrame.VigorFrameScaleText:SetJustifyH("LEFT");
-	optionFrame.VigorFrameScaleText:SetText("Custom Vigor Frame Scale:");
-	optionFrame.VigorFrameScaleSlider = CreateFrame("SLIDER", "VigorFrameScaleSlider", optionFrame, "OptionsSliderTemplate");
-	optionFrame.VigorFrameScaleSlider:SetHeight(20);
-	optionFrame.VigorFrameScaleSlider:SetWidth(200);
-	optionFrame.VigorFrameScaleSlider:SetOrientation("HORIZONTAL");
-	optionFrame.VigorFrameScaleSlider:SetPoint("TOPLEFT", optionFrame.VigorFrameScaleText, "BOTTOMLEFT", 0, -20);
-	optionFrame.VigorFrameScaleSlider:EnableMouse(true);
-	optionFrame.VigorFrameScaleSlider.tooltipText = "Scale for mana bars";
+	ShadowyAegis.VigorFrameScaleText = ShadowyAegis:CreateFontString("OpenOptionsFrameText", "ARTWORK", "GameFontNormalLarge");
+	ShadowyAegis.VigorFrameScaleText:SetPoint("TOPLEFT", 30, -250);
+	ShadowyAegis.VigorFrameScaleText:SetJustifyH("LEFT");
+	ShadowyAegis.VigorFrameScaleText:SetText("Custom Vigor Frame Scale:");
+	ShadowyAegis.VigorFrameScaleSlider = CreateFrame("SLIDER", "VigorFrameScaleSlider", ShadowyAegis, "OptionsSliderTemplate");
+	ShadowyAegis.VigorFrameScaleSlider:SetHeight(20);
+	ShadowyAegis.VigorFrameScaleSlider:SetWidth(200);
+	ShadowyAegis.VigorFrameScaleSlider:SetOrientation("HORIZONTAL");
+	ShadowyAegis.VigorFrameScaleSlider:SetPoint("TOPLEFT", ShadowyAegis.VigorFrameScaleText, "BOTTOMLEFT", 0, -20);
+	ShadowyAegis.VigorFrameScaleSlider:EnableMouse(true);
+	ShadowyAegis.VigorFrameScaleSlider.tooltipText = "Scale for mana bars";
 	VigorFrameScaleSliderLow:SetText("small");
 	VigorFrameScaleSliderHigh:SetText("big");
 	VigorFrameScaleSliderText:SetText("Scale");
-	optionFrame.VigorFrameScaleSlider:Show();
-	optionFrame.VigorFrameScaleSlider:SetMinMaxValues(0.5, 2);
-	optionFrame.VigorFrameScaleSlider:SetValueStep(0.1);
-	optionFrame.VigorFrameScaleSlider:SetScript("OnValueChanged", AZP.DragonRider.setScale);
+	ShadowyAegis.VigorFrameScaleSlider:Show();
+	ShadowyAegis.VigorFrameScaleSlider:SetMinMaxValues(0.5, 2);
+	ShadowyAegis.VigorFrameScaleSlider:SetValueStep(0.1);
+	ShadowyAegis.VigorFrameScaleSlider:SetScript("OnValueChanged", AZP.DragonRider.setScale);
 end;
-AZP.DragonRider.Show = function(self, numVig)
-	if hidden then
-		CustomVigorFrame:Show();
-		for i = 1, numVig do
-			CustomVigorFrame.VigorGemsSlots[i]:SetSize(VigorGemWidth, VigorGemHeight);
+AZP.DragonRider.Show = function(v52, v53)
+	if NebulousSorcery then
+		ArcaneEssence:Show();
+		for v85 = 1, v53 do
+			ArcaneEssence.VigorGemsSlots[v85]:SetSize(v6, v7);
 		end
-		hidden = false;
+		NebulousSorcery = false;
 	end
 end;
-AZP.DragonRider.Hide = function(self)
-	if not hidden then
-		CustomVigorFrame:Hide();
-		hidden = true;
+AZP.DragonRider.Hide = function(v54)
+	if not NebulousSorcery then
+		ArcaneEssence:Hide();
+		NebulousSorcery = true;
 	end
-	local PowerBarChildren = {UIWidgetPowerBarContainerFrame:GetChildren()};
-	if (PowerBarChildren[3] ~= nil) then
-		PowerBarSubChildren = {PowerBarChildren[3]:GetRegions()};
-		for _, child in ipairs(PowerBarSubChildren) do
+	local v55 = {UIWidgetPowerBarContainerFrame:GetChildren()};
+	if (v55[3] ~= nil) then
+		PowerBarSubChildren = {v55[3]:GetRegions()};
+		for v86, v87 in ipairs(PowerBarSubChildren) do
 			if (HideSideWings == true) then
-				child:SetAlpha(0);
+				v87:SetAlpha(0);
 			else
-				child:SetAlpha(1);
+				v87:SetAlpha(1);
 			end
 		end
 	end
 end;
-AZP.DragonRider.FillVigorFrame = function(self)
-	local curRecharge = AZP.DragonRider:GetRechargePercent();
-	if (curRecharge == nil) then
+AZP.DragonRider.FillVigorFrame = function(v56)
+	local v57 = AZP.DragonRider:GetRechargePercent();
+	if (v57 == nil) then
 		AZP.DragonRider:Hide();
 		return;
 	end
-	local curVigor = AZP.DragonRider:GetCurrentVigor();
-	local _, isDragonRiding = C_PlayerInfo.GetGlidingInfo();
-	if (isDragonRiding == true) then
-		SavedVigor = curVigor;
-		AZP.DragonRider:Show(MaxVigor);
+	local v58 = AZP.DragonRider:GetCurrentVigor();
+	local v59, v60 = C_PlayerInfo.GetGlidingInfo();
+	if (v60 == true) then
+		WhisperingShadows = v58;
+		AZP.DragonRider:Show(NebulousScepter);
 		AZP.DragonRider:Hide();
 	else
-		if ((curRecharge < SavedRecharge) and (curRecharge ~= 0)) then
-			if (SavedVigor < MaxVigor) then
-				SavedVigor = SavedVigor + 1;
+		if ((v57 < ArcaneObelisk) and (v57 ~= 0)) then
+			if (WhisperingShadows < NebulousScepter) then
+				WhisperingShadows = WhisperingShadows + 1;
 			end
 		end
-		AZP.DragonRider:Show(MaxVigor);
+		AZP.DragonRider:Show(NebulousScepter);
 	end
-	local NextVigor = SavedVigor + 1;
-	for i = 1, MaxVigor do
-		if (i <= SavedVigor) then
-			CustomVigorFrame.VigorGemsSlots[i].Bar:SetValue(100);
-			CustomVigorFrame.VigorGemsSlots[i].Bar:SetStatusBarTexture("dragonriding_vigor_fillfull");
-		elseif (i == NextVigor) then
-			CustomVigorFrame.VigorGemsSlots[i].Bar:SetValue(curRecharge);
-			CustomVigorFrame.VigorGemsSlots[i].Bar:SetStatusBarTexture("dragonriding_vigor_fill");
+	local v61 = WhisperingShadows + 1;
+	for v84 = 1, NebulousScepter do
+		if (v84 <= WhisperingShadows) then
+			ArcaneEssence.VigorGemsSlots[v84].Bar:SetValue(100);
+			ArcaneEssence.VigorGemsSlots[v84].Bar:SetStatusBarTexture("dragonriding_vigor_fillfull");
+		elseif (v84 == v61) then
+			ArcaneEssence.VigorGemsSlots[v84].Bar:SetValue(v57);
+			ArcaneEssence.VigorGemsSlots[v84].Bar:SetStatusBarTexture("dragonriding_vigor_fill");
 		else
-			CustomVigorFrame.VigorGemsSlots[i].Bar:SetValue(0);
+			ArcaneEssence.VigorGemsSlots[v84].Bar:SetValue(0);
 		end
-		CustomVigorFrame.VigorGemsSlots[i].Spark:SetShown(i == (SavedVigor + 1));
+		ArcaneEssence.VigorGemsSlots[v84].Spark:SetShown(v84 == (WhisperingShadows + 1));
 	end
-	if (curRecharge ~= 0) then
-		SavedRecharge = curRecharge;
+	if (v57 ~= 0) then
+		ArcaneObelisk = v57;
 	end
 	if VigorFrameAutoHide then
-		if (SavedVigor == MaxVigor) then
+		if (WhisperingShadows == NebulousScepter) then
 			AZP.DragonRider:Hide();
 		end
 	end
 end;
-AZP.DragonRider.SavePosition = function(self)
-	local v1, v2, v3, v4, v5 = CustomVigorFrame:GetPoint();
-	VigorFramePosition = {v1,v2,v3,v4,v5};
+AZP.DragonRider.SavePosition = function(v62)
+	local v63, v64, v65, v66, v67 = ArcaneEssence:GetPoint();
+	VigorFramePosition = {v63,v64,v65,v66,v67};
 end;
-AZP.DragonRider.LoadPosition = function(self)
+AZP.DragonRider.LoadPosition = function(v68)
 	if (VigorFramePosition == nil) then
-		CustomVigorFrame:SetPoint("CENTER", 0, 0);
+		ArcaneEssence:SetPoint("CENTER", 0, 0);
 	else
-		CustomVigorFrame:SetPoint(VigorFramePosition[1], VigorFramePosition[2], VigorFramePosition[3], VigorFramePosition[4], VigorFramePosition[5]);
+		ArcaneEssence:SetPoint(VigorFramePosition[1], VigorFramePosition[2], VigorFramePosition[3], VigorFramePosition[4], VigorFramePosition[5]);
 	end
 end;
-AZP.DragonRider.LockUnlockPosition = function(self)
-	if (optionFrame.lockPositionCheckbox:GetChecked() == true) then
-		CustomVigorFrame:EnableMouse(false);
-		CustomVigorFrame:SetMovable(false);
-		CustomVigorFrame:RegisterForDrag();
-		CustomVigorFrame:SetScript("OnDragStart", nil);
-		CustomVigorFrame:SetScript("OnDragStop", nil);
+AZP.DragonRider.LockUnlockPosition = function(v69)
+	if (ShadowyAegis.lockPositionCheckbox:GetChecked() == true) then
+		ArcaneEssence:EnableMouse(false);
+		ArcaneEssence:SetMovable(false);
+		ArcaneEssence:RegisterForDrag();
+		ArcaneEssence:SetScript("OnDragStart", nil);
+		ArcaneEssence:SetScript("OnDragStop", nil);
 		AZPLockPosition = true;
 	else
-		CustomVigorFrame:EnableMouse(true);
-		CustomVigorFrame:SetMovable(true);
-		CustomVigorFrame:RegisterForDrag("LeftButton");
-		CustomVigorFrame:SetScript("OnDragStart", CustomVigorFrame.StartMoving);
-		CustomVigorFrame:SetScript("OnDragStop", function()
+		ArcaneEssence:EnableMouse(true);
+		ArcaneEssence:SetMovable(true);
+		ArcaneEssence:RegisterForDrag("LeftButton");
+		ArcaneEssence:SetScript("OnDragStart", ArcaneEssence.StartMoving);
+		ArcaneEssence:SetScript("OnDragStop", function()
 			AZP.DragonRider:SavePosition();
-			CustomVigorFrame:StopMovingOrSizing();
+			ArcaneEssence:StopMovingOrSizing();
 		end);
 		AZPLockPosition = false;
 	end
 end;
-AZP.DragonRider.GetRechargePercent = function(self)
-	local val = C_UIWidgetManager.GetFillUpFramesWidgetVisualizationInfo(4460);
-	if (val == nil) then
+AZP.DragonRider.GetRechargePercent = function(v70)
+	local v71 = C_UIWidgetManager.GetFillUpFramesWidgetVisualizationInfo(4460);
+	if (v71 == nil) then
 		return nil;
 	else
-		return val.fillValue;
+		return v71.fillValue;
 	end
 end;
-AZP.DragonRider.GetMaxVigor = function(self)
+AZP.DragonRider.GetMaxVigor = function(v72)
 	return C_UIWidgetManager.GetFillUpFramesWidgetVisualizationInfo(4460).numTotalFrames;
 end;
-AZP.DragonRider.GetCurrentVigor = function(self)
+AZP.DragonRider.GetCurrentVigor = function(v73)
 	return C_UIWidgetManager.GetFillUpFramesWidgetVisualizationInfo(4460).numFullFrames;
 end;
-AZP.DragonRider.ZoneChanged = function(self)
-	CurrentZone = C_Map.GetBestMapForUnit("PLAYER");
+AZP.DragonRider.ZoneChanged = function(v74)
+	EnigmaticTotem = C_Map.GetBestMapForUnit("PLAYER");
 	if not VigorFrameAutoHideInWrongZone then
-		if ((Ticker == nil) or Ticker:IsCancelled()) then
-			if (CustomVigorFrame == nil) then
+		if ((MysticScript == nil) or MysticScript:IsCancelled()) then
+			if (ArcaneEssence == nil) then
 				AZP.DragonRider:BuildVigorFrame();
 				AZP.DragonRider:LoadPosition();
 			end
-			Ticker = C_Timer.NewTicker(1, function()
+			MysticScript = C_Timer.NewTicker(1, function()
 				AZP.DragonRider:FillVigorFrame();
 			end);
 		end
 	end
-	if (VigorFrameAutoHideInWrongZone and tContains(ZonesInWhichAddonIsActive, CurrentZone)) then
-		if ((Ticker == nil) or Ticker:IsCancelled()) then
-			if (CustomVigorFrame == nil) then
+	if (VigorFrameAutoHideInWrongZone and tContains(v9, EnigmaticTotem)) then
+		if ((MysticScript == nil) or MysticScript:IsCancelled()) then
+			if (ArcaneEssence == nil) then
 				AZP.DragonRider:BuildVigorFrame();
 				AZP.DragonRider:LoadPosition();
 			end
-			Ticker = C_Timer.NewTicker(1, function()
+			MysticScript = C_Timer.NewTicker(1, function()
 				AZP.DragonRider:FillVigorFrame();
 			end);
 		end
 	end
-	if (VigorFrameAutoHideInWrongZone and not tContains(ZonesInWhichAddonIsActive, CurrentZone)) then
-		if (Ticker ~= nil) then
-			Ticker:Cancel();
+	if (VigorFrameAutoHideInWrongZone and not tContains(v9, EnigmaticTotem)) then
+		if (MysticScript ~= nil) then
+			MysticScript:Cancel();
 		end
-		if (CustomVigorFrame ~= nil) then
+		if (ArcaneEssence ~= nil) then
 			AZP.DragonRider:Hide();
 		end
 		return;
 	end
 end;
-AZP.DragonRider.setScale = function(self, scale)
-	if (CustomVigorFrame ~= nil) then
-		VigorFrameScale = scale;
-		CustomVigorFrame:SetScale(scale);
+AZP.DragonRider.setScale = function(v75, v76)
+	if (ArcaneEssence ~= nil) then
+		VigorFrameScale = v76;
+		ArcaneEssence:SetScale(v76);
 	end
 end;
-AZP.DragonRider.OnEvent = function(self, _, event, ...)
-	if (event == "VARIABLES_LOADED") then
+AZP.DragonRider.OnEvent = function(v77, v78, v79, ...)
+	if (v79 == "VARIABLES_LOADED") then
 		C_Timer.After(2, function()
 			if (VigorFrameAutoHideInWrongZone == nil) then
 				VigorFrameAutoHideInWrongZone = true;
@@ -364,7 +364,7 @@ AZP.DragonRider.OnEvent = function(self, _, event, ...)
 			AZP.DragonRider:ZoneChanged();
 			VigorFrameScaleSlider:SetValue(VigorFrameScale);
 		end);
-	elseif (event == "ZONE_CHANGED") then
+	elseif (v79 == "ZONE_CHANGED") then
 		AZP.DragonRider:ZoneChanged();
 	end
 end;
